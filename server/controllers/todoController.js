@@ -1,12 +1,18 @@
-const Todo = require('../models/TodoModel');
+const { User, Todo } = require('../models');
+const { QueryTypes } = require('sequelize');
+const { sequelize } = require('../db/db');
 
-const createTodo = async (req, res) => {
+const createTodoForUser = async (req, res) => {
     try {
         const { description, age } = req.body;
-        const newTodo = await Todo.create({
-            description,
-            age,
-        });
+
+        const user = await User.findByPk(1);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const newTodo = await Todo.create({ description, age });        //add to Todo table
+        await user.addTodo(newTodo);    // 加了addTodo，我的junction table就会自动记录相关的信息（用于在建立 Many-to-Many 关系时，将两个table关联起来）
 
         return res.status(201).send(newTodo);
     } catch (err) {
@@ -15,26 +21,24 @@ const createTodo = async (req, res) => {
     }
 };
 
-const getTodos = async (req, res) => {
+const getTodosForUser = async (req, res) => {
     try {
         const allTodos = await Todo.findAll();
-        return res.status(200).json({ allTodos });      //pass to client as an object
-    } catch (err) {
-        console.error(err.message);
-        return res.status(500).send({ error: 'Internal Server Error' });
-    }
-};
+    
+        const sqlQuery = 
+        `
+        SELECT user3.username, todo3.description, todo3.age
+        FROM user3
+        JOIN usertodo3 ON usertodo3.user_id = user3.user_id
+        JOIN todo3 ON usertodo3.todo_id = todo3.todo_id
+        `;
 
-const getTodo = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const todo = await Todo.findByPk(id);   //similar to findById
+        const result = await sequelize.query(sqlQuery, {
+            type: QueryTypes.SELECT,
+        });
+        // console.log(result);
 
-        if (!todo) {
-            return res.status(404).json({ message: 'Todo not found' });
-        }
-
-        return res.status(200).json({ todo });
+        return res.status(200).json({ allTodos });
     } catch (err) {
         console.error(err.message);
         return res.status(500).send({ error: 'Internal Server Error' });
@@ -59,6 +63,7 @@ const deleteTodo = async (req, res) => {
     }
 };
 
+
 const updateTodo = async (req, res) => {
     try {
         const { id } = req.params;
@@ -79,13 +84,26 @@ const updateTodo = async (req, res) => {
     }
 };
 
-module.exports = {
-    createTodo,
-    getTodos,
-    getTodo,
-    deleteTodo,
-    updateTodo
+const getTodo = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const todo = await Todo.findByPk(id);   //similar to findById
+
+        if (!todo) {
+            return res.status(404).json({ message: 'Todo not found' });
+        }
+
+        return res.status(200).json({ todo });
+    } catch (err) {
+        console.error(err.message);
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
 };
 
-
-
+module.exports = {
+    createTodoForUser,
+    getTodosForUser,
+    deleteTodo,
+    getTodo,
+    updateTodo,
+};
