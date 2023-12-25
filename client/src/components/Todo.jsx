@@ -21,7 +21,7 @@ const Todo = ({ e }) => {
 
     return (
         <div>
-            <p>id: {e.todo_id}</p>
+            <p>Id: {e.todo_id}</p>
             <p>Description: {e.description}</p>
             <p>Age: {e.age}</p>
             <button onClick={() => deleteTodo(e.todo_id)}>Delete</button>
@@ -33,6 +33,7 @@ const Todo = ({ e }) => {
             <Link to={`todos/edit/${e.todo_id}`}>
                 Edit
             </Link>
+            <hr />
         </div>
     )
 }

@@ -10,8 +10,8 @@ const ShowSingleTodo = () => {
         try {
             const response = await fetch(`${import.meta.env.VITE_PUBLIC_URL}/todos/details/${id}`);
             const jsonData = await response.json();
-            // console.log(jsonData.allTodos.rows);
-            setTodo(jsonData.allTodos.rows);
+            const {todo} = jsonData;
+            setTodo(todo);
         } catch (error) {
             console.error(error);
         }
@@ -19,15 +19,13 @@ const ShowSingleTodo = () => {
 
     useEffect(() => {
         fetchSingleTodo();
-    },[]);
+    }, []);
     return (
         <div>
-            {todo.map((e) => (
-                <div key={e.todo_id}>
-                    <p>{e.age}</p>
-                    <p>{e.description}</p>
-                </div>
-            ))}
+            <div>
+                <p>Age: {todo.age}</p>
+                <p>Description: {todo.description}</p>
+            </div>
             <button onClick={() => navigate('/')}>Back</button>
         </div>
     )

@@ -1,64 +1,61 @@
-const pool = require('../db');
-
+const Todo = require('../models/TodoModel');
 
 const createTodo = async (req, res) => {
     try {
         const { description, age } = req.body;
-        const newTodo = await pool.query(
-            "INSERT INTO todo (description, age) VALUES($1, $2)",       //RETURNING * 代表返回这个新add的value
-            [description, age]
-        );
+        const newTodo = await Todo.create({
+            description,
+            age,
+        });
+
         return res.status(201).send(newTodo);
     } catch (err) {
         console.error(err.message);
+        return res.status(500).send({ error: 'Internal Server Error' });
     }
 };
 
-
 const getTodos = async (req, res) => {
     try {
-        const allTodos = await pool.query("SELECT * FROM todo");
-        return res.status(200).json({ allTodos });
+        const allTodos = await Todo.findAll();
+        return res.status(200).json({ allTodos });      //pass to client as an object
     } catch (err) {
         console.error(err.message);
+        return res.status(500).send({ error: 'Internal Server Error' });
     }
 };
 
 const getTodo = async (req, res) => {
     try {
         const { id } = req.params;
-        const allTodos = await pool.query("SELECT * FROM todo WHERE todo_id = $1", [id]);
-        return res.status(200).json({ allTodos });
+        const todo = await Todo.findByPk(id);   //similar to findById
+
+        if (!todo) {
+            return res.status(404).json({ message: 'Todo not found' });
+        }
+
+        return res.status(200).json({ todo });
     } catch (err) {
         console.error(err.message);
+        return res.status(500).send({ error: 'Internal Server Error' });
     }
 };
 
-// // delete via url params
-// const deleteTodo = async (req, res) => {
-//     try {
-//         const { id } = req.params;
-//         const deleteTodo = await pool.query("DELETE FROM todo WHERE todo_id = $1", [id]);
-//         if (!deleteTodo) {
-//             return res.status(404).json({ message: 'Todo not found' });
-//         }
-//         return res.status(200).send({ message: 'Todo was deleted!' });
-//     } catch (err) {
-//         console.log(err.message);
-//     }
-// };
-
-// delete via request body
 const deleteTodo = async (req, res) => {
     try {
         const { id } = req.body;
-        const deleteTodo = await pool.query("DELETE FROM todo WHERE todo_id = $1", [id]);
-        if (!deleteTodo) {
+        const deleteCount = await Todo.destroy(      //destroy 方法返回有多少个被成功dlt了
+            { where: { todo_id: id } }    
+        );
+
+        if (deleteCount === 0) {
             return res.status(404).json({ message: 'Todo not found' });
         }
+
         return res.status(200).send({ message: 'Todo was deleted!' });
     } catch (err) {
         console.log(err.message);
+        return res.status(500).send({ error: 'Internal Server Error' });
     }
 };
 
@@ -66,17 +63,19 @@ const updateTodo = async (req, res) => {
     try {
         const { id } = req.params;
         const { description, age } = req.body;
-        const updateTodo = await pool.query(
-            "UPDATE todo SET description = $1, age = $2 WHERE todo_id = $3",
-            [description, age, id]
+        const [updateCount] = await Todo.update(        //update方法返回一个数组，其一是更新过的数量(updateCount)，其二是被更新的对象(updatedRecord)，在这里我们直接结构第一个参数出来
+            { description, age },
+            { where: { todo_id: id } }
         );
 
-        if (!updateTodo) {
+        if (updateCount === 0) {
             return res.status(404).json({ message: 'Todo not found' });
         }
+
         return res.status(200).send({ message: 'Todo updated successfully' });
     } catch (err) {
         console.error(err.message);
+        return res.status(500).send({ error: 'Internal Server Error' });
     }
 };
 
@@ -87,3 +86,6 @@ module.exports = {
     deleteTodo,
     updateTodo
 };
+
+
+

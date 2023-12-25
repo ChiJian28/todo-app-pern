@@ -24,5 +24,8 @@ router.delete('/', deleteTodo);
 router.put('/edit/:id', updateTodo);
 
 
-
 module.exports = router;
+
+
+// router.(路径，callback function)
+// router.(路径，middleware，callback function)

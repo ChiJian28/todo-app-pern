@@ -10,9 +10,9 @@ const Home = () => {
         try {
             const response = await fetch(`${import.meta.env.VITE_PUBLIC_URL}/todos`);
             const jsonData = await response.json();
-            // console.log(jsonData.allTodos.rows);
-            const rowsData = jsonData.allTodos.rows;
-            setTodos(rowsData);
+            const data = jsonData.allTodos;
+            // console.log(data);
+            setTodos(data);
         } catch (err) {
             console.error(err.message);
         }
@@ -29,7 +29,7 @@ const Home = () => {
             setDescription('');
             await fetch(`${import.meta.env.VITE_PUBLIC_URL}/todos/create`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: { "Content-Type": "application/json" },    // indicate my request body to server is in json format
                 body: JSON.stringify(body)
             });
             console.log('created successfully');
